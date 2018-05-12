@@ -9,6 +9,7 @@ window of time.
 import json
 from collections import Counter
 import numpy as np
+import operator
 
 SR_LIST = '../data/listofsubreddits.txt'
 DEFAULTS = '../data/defaults.txt'
@@ -39,7 +40,7 @@ def inspect_counts():
     with open(NO_DEFAULTS, 'r') as inputfile: 
         for line in inputfile: 
             reddits.add(line.strip()[3:])
-    gender_related = set(['MaleFashionAdvice',
+    gender_related = ['MaleFashionAdvice',
                 'everymanshouldknow',
                 'askmen',
                 'frugalmalefashion',
@@ -62,19 +63,20 @@ def inspect_counts():
                 'malelivingspace',
                 'TheGirlSurvivalGuide',
                 'MensRights',
-                'feminism'])
+                'feminism']
+    gender_related = set([r.lower() for r in gender_related])
     with open(TOK_COUNTS, 'r') as inputfile: 
         data = json.load(inputfile)
-    print reddits - set(data.keys())
-    top_sr = set()
-    for sr in data: 
-        if data[sr] > 10**7: 
-            top_sr.add(sr)
+    print reddits - set(data.keys()) # probably newer subreddits
+    sorted_x = sorted(data.items(), key=operator.itemgetter(1))
+    top_sr = sorted_x[-400:]  
+    print top_sr
     print len(top_sr)
-    print gender_related & top_sr
+    tops = set([l[0] for l in top_sr])
+    print "GENDER:", gender_related & tops
 
 def main(): 
-    subtract_defaults()
+    #subtract_defaults()
     inspect_counts()
 
 if __name__ == '__main__':
