@@ -871,7 +871,7 @@ Individual Shows
 /r/community
 /r/arresteddevelopment
 /r/topgear
-/r/StarTrek More here!
+/r/StarTrek
 /r/HIMYM
 /r/firefly
 /r/IASIP
