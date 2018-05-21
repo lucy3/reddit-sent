@@ -49,7 +49,7 @@ def get_subreddit_user(line):
     if 'subreddit' in comment and 'author' in comment: 
         return ((comment['subreddit'].lower(), comment['author']), 1)
     else: 
-        return (None, Counter())
+        return (None, 0)
     
 def do_unigrams(data, m, reddits):
     uni = data.map(get_subreddit_unigrams)
@@ -105,40 +105,35 @@ def filter_data():
               '2016/RC_2016-11', '2016/RC_2016-12', '2017/RC_2017-01', \
               '2017/RC_2017-02', '2017/RC_2017-03', '2017/RC_2017-04']
     conf = SparkConf()
-    #conf = (conf.setMaster('local[*]')
-    #    .set('spark.executor.memory', '16G')
-    #    .set('spark.driver.memory', '45G')
-    #    .set('spark.driver.maxResultSize', '10G'))
     sc = SparkContext(conf=conf)
     for m in months: 
         start = time.time()
         path = INPUT_PREFIX + m
-        print path
-        data = sc.textFile(path)
-        do_unigrams(data, m, reddits)  
-        print "TIME:", time.time() - start
-    sc.stop() 
-    
-    sc = SparkContext(conf=conf)
-    for m in months: 
-        start = time.time()
-        path = INPUT_PREFIX + m
-        print path
+        print "BIGRAMS", path
         data = sc.textFile(path)
         do_bigrams(data, m, reddits)
         print "TIME:", time.time() - start
     sc.stop() 
-    
+    '''
     sc = SparkContext(conf=conf)
     for m in months: 
         start = time.time()
         path = INPUT_PREFIX + m
-        print path
+        print "USERS", path
         data = sc.textFile(path)
         do_users(data, m, reddits)
         print "TIME:", time.time() - start
     sc.stop() 
-    
+    sc = SparkContext(conf=conf)
+    for m in months: 
+        start = time.time()
+        path = INPUT_PREFIX + m
+        print "UNIGRAMS", path
+        data = sc.textFile(path)
+        do_unigrams(data, m, reddits)  
+        print "TIME:", time.time() - start
+    sc.stop() 
+    '''
 
 def main(): 
     filter_data()
