@@ -59,7 +59,7 @@ def parallel_ugh():
         print path
         data = sc.textFile(path)
         data = data.map(get_comment)
-        data = data.reduceByKey(lambda n1, n2: n1 + ' \n\n ' + n2)
+        data = data.reduceByKey(lambda n1, n2: n1 + ' <#S#> <#S#> <#S#> <#S#> <#S#>  ' + n2)
         data = data.foreach(save_doc)
         print "TIME", time.time() - start
         sc.stop()

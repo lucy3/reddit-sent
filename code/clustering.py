@@ -21,11 +21,7 @@ import matplotlib.pyplot as plt
     
 def cluster(rep): 
     """
-    See how well the clusters match up. 
-    
-    NOT FINISHED YET
-    
-    TODO: SVD on TF-IDF
+    Write out text-based and user-based clusters. 
     """
     if rep == 'text': 
         ROWS = UNI_ROWS

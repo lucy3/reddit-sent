@@ -8,12 +8,18 @@ from pyspark import SparkConf, SparkContext
 import json
 from collections import Counter
 import time
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 SUBREDDITS = '/dfs/scratch2/lucy3/reddit-sent/data/subreddits_no_defaults.txt'
+OUR_SR = '/dfs/scratch2/lucy3/reddit-sent/data/our_subreddits.txt'
 MINI = '/dfs/scratch2/lucy3/reddit-sent/data/mini_data.txt' # for code testing purposes
 INPUT_PREFIX = '/dfs/dataset/infolab/Reddit/comments/'
 COM_COUNTS = '/dfs/scratch2/lucy3/reddit-sent/logs/comment_counts.json'
 TOK_COUNTS = '/dfs/scratch2/lucy3/reddit-sent/logs/token_counts.json'
+COM_HIST = '/dfs/scratch2/lucy3/reddit-sent/logs/comment_hist.png'
+TOK_HIST = '/dfs/scratch2/lucy3/reddit-sent/logs/token_hist.png'
 
 def get_subreddit_tokens(line): 
     comment = json.loads(line)
@@ -65,9 +71,45 @@ def count_comments():
     sc.stop() 
     end = time.time()
     print "TIME:", end - start
+    
+def get_hists(): 
+    reddits = set()
+    with open(OUR_SR, 'r') as inputfile: 
+        for line in inputfile: 
+            reddits.add(line.strip().lower())
+    with open(COM_COUNTS, 'r') as inputfile: 
+        data = json.load(inputfile)
+    vals = []
+    for sr in data: 
+        if sr.lower() in reddits: 
+            vals.append(data[sr])
+    print max(vals), min(vals)
+    plt.figure(figsize=(7, 4))
+    plt.hist(vals, bins=30)
+    plt.yscale('log')
+    plt.ylabel('log frequency')
+    plt.xlabel('# of comments')
+    plt.title('Subreddit Comment Counts')
+    plt.savefig(COM_HIST)
+    plt.close()
+    with open(TOK_COUNTS, 'r') as inputfile: 
+        data = json.load(inputfile)
+    vals = []
+    for sr in data: 
+        if sr.lower() in reddits: 
+            vals.append(data[sr])
+    print max(vals), min(vals)
+    plt.figure(figsize=(7, 4))
+    plt.hist(vals, bins=30)
+    plt.yscale('log')
+    plt.ylabel('log frequency')
+    plt.xlabel('# of tokens')
+    plt.title('Subreddit Token Counts')
+    plt.savefig(TOK_HIST)
+    plt.close()
 
 def main(): 
-    count_comments()
+    get_hists()
 
 if __name__ == '__main__':
     main()
