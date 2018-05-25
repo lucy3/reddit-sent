@@ -12,6 +12,7 @@ import numpy as np
 from scipy import spatial
 from tqdm import tqdm # progress bar
 from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import Normalizer
 
 UNIGRAMS = '/dfs/scratch2/lucy3/reddit-sent/data/unigrams/'
 UNI_TFIDF = '/dfs/scratch2/lucy3/reddit-sent/logs/tf-idf_unigrams.npy'
@@ -51,7 +52,9 @@ def get_idf(rep):
             dfs[w] += 1
     idfs = {}
     for w in dfs: 
-        if dfs[w] >= 5 and dfs[w] <= 0.95*num_sr: 
+        if rep == 'text' and dfs[w] >= 5 and dfs[w] <= 0.95*num_sr: 
+            idfs[w] = math.log10(num_sr/float(dfs[w]))
+        elif rep == 'user' and dfs[w] > 1 and dfs[w] <= 0.95*num_sr: 
             # don't penalize low users but penalize bots (high)
             idfs[w] = math.log10(num_sr/float(dfs[w]))
     return idfs
@@ -80,9 +83,9 @@ def get_tf_idf(idfs, rep):
     X = []
     num_sr = 0
     for sr in tqdm(os.listdir(INPUT)): 
+        if sr.startswith('.'): continue
         srs.append(sr)
         tfs = Counter() 
-        if sr.startswith('.'): continue
         num_sr += 1
         for month in os.listdir(INPUT + sr): 
             if month.startswith('.'): continue
@@ -121,12 +124,15 @@ def svd_tf_idf(rep):
     svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
     X = np.load(INPUT)
     X_new = svd.fit_transform(X)
-    np.save(OUTPUT, X_new)
+    normalizer = Normalizer(copy=False)
+    X_new_new = normalizer.fit_transform(X_new)
+    np.save(OUTPUT, X_new_new)
 
 def main(): 
     #idfs = get_idf('user') 
     #get_tf_idf(idfs, 'user')
     svd_tf_idf('user')
+    svd_tf_idf('text')
 
 if __name__ == '__main__':
     main()
