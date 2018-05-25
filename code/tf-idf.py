@@ -121,7 +121,7 @@ def svd_tf_idf(rep):
     elif rep == 'user': 
         INPUT = USR_TFIDF
         OUTPUT = USR_SVD_TFIDF
-    svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+    svd = TruncatedSVD(n_components=200, n_iter=7, random_state=42)
     X = np.load(INPUT)
     X_new = svd.fit_transform(X)
     normalizer = Normalizer(copy=False)

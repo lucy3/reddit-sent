@@ -49,6 +49,7 @@ def parallel_ugh():
               '2016/RC_2016-08', '2016/RC_2016-09', '2016/RC_2016-10', \
               '2016/RC_2016-11', '2016/RC_2016-12', '2017/RC_2017-01', \
               '2017/RC_2017-02', '2017/RC_2017-03', '2017/RC_2017-04']
+    months = ['2017/RC_2017-04']
     conf = SparkConf()
     for m in months: 
         sc = SparkContext(conf=conf)
