@@ -14,6 +14,8 @@ from tqdm import tqdm # progress bar
 
 UNIGRAMS = '../data/unigrams/'
 OUTPUT = '../logs/tf-idf_unigrams'
+VOCAB = '../logs/tf-idf_columns'
+SUBREDS = '../logs/tf-idf_rows'
 
 def get_idf(): 
     '''
@@ -38,6 +40,7 @@ def get_idf():
     idfs = {}
     for w in dfs: 
         if dfs[w] >= 5 and dfs[w] <= 0.95*num_sr: 
+            # don't penalize low users but penalize bots (high)
             idfs[w] = math.log10(num_sr/float(dfs[w]))
     return idfs
     
@@ -53,6 +56,7 @@ def get_tf_idf(idfs):
     vocab = sorted(idfs.keys())
     srs = []
     X = []
+    num_sr = 0
     for sr in tqdm(os.listdir(UNIGRAMS)): 
         srs.append(sr)
         tfs = Counter() 
@@ -65,7 +69,7 @@ def get_tf_idf(idfs):
                     contents = line.strip().split()
                     w = contents[0] 
                     if w in idfs: 
-                        count = int(counters[-1])
+                        count = int(contents[-1])
                         tfs[w] += count
         vec = np.zeros(len(vocab))
         for i, w in enumerate(vocab): 
@@ -75,6 +79,12 @@ def get_tf_idf(idfs):
     X = np.array(X)
     print X.shape
     np.save(OUTPUT, X)
+    with open(SUBREDS, 'w') as outputfile: 
+        for sr in srs: 
+            outputfile.write(sr + '\n') 
+    with open(VOCAB, 'w') as outputfile: 
+        for w in vocab: 
+            outputfile.write(w + '\n') 
     print 1 - spatial.distance.cosine(X[srs.index('android')], X[srs.index('apple')])
     print 1 - spatial.distance.cosine(X[srs.index('london')], X[srs.index('ukpolitics')])
     print 1 - spatial.distance.cosine(X[srs.index('london')], X[srs.index('android')])

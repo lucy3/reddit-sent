@@ -105,6 +105,7 @@ def filter_data():
               '2016/RC_2016-11', '2016/RC_2016-12', '2017/RC_2017-01', \
               '2017/RC_2017-02', '2017/RC_2017-03', '2017/RC_2017-04']
     conf = SparkConf()
+    '''
     sc = SparkContext(conf=conf)
     for m in months: 
         start = time.time()
@@ -133,7 +134,6 @@ def filter_data():
         do_unigrams(data, m, reddits)  
         print "TIME:", time.time() - start
     sc.stop() 
-    '''
 
 def main(): 
     filter_data()
