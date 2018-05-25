@@ -9,11 +9,11 @@ import json
 from collections import Counter
 import time
 
-SUBREDDITS = '../data/subreddits_no_defaults.txt'
-MINI = '../data/mini_data.txt' # for code testing purposes
+SUBREDDITS = '/dfs/scratch2/lucy3/reddit-sent/data/subreddits_no_defaults.txt'
+MINI = '/dfs/scratch2/lucy3/reddit-sent/data/mini_data.txt' # for code testing purposes
 INPUT_PREFIX = '/dfs/dataset/infolab/Reddit/comments/'
-COM_COUNTS = '../logs/comment_counts.json'
-TOK_COUNTS = '../logs/token_counts.json'
+COM_COUNTS = '/dfs/scratch2/lucy3/reddit-sent/logs/comment_counts.json'
+TOK_COUNTS = '/dfs/scratch2/lucy3/reddit-sent/logs/token_counts.json'
 
 def get_subreddit_tokens(line): 
     comment = json.loads(line)

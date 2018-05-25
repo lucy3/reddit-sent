@@ -11,11 +11,11 @@ from collections import Counter
 import numpy as np
 import operator
 
-SR_LIST = '../data/listofsubreddits.txt'
-DEFAULTS = '../data/defaults.txt'
-NO_DEFAULTS = '../data/subreddits_no_defaults.txt'
-TOK_COUNTS = '../logs/token_counts.json'
-FOCUS = '../data/our_subreddits.txt'
+SR_LIST = '/dfs/scratch2/lucy3/reddit-sent/data/listofsubreddits.txt'
+DEFAULTS = '/dfs/scratch2/lucy3/reddit-sent/data/defaults.txt'
+NO_DEFAULTS = '/dfs/scratch2/lucy3/reddit-sent/data/subreddits_no_defaults.txt'
+TOK_COUNTS = '/dfs/scratch2/lucy3/reddit-sent/logs/token_counts.json'
+FOCUS = '/dfs/scratch2/lucy3/reddit-sent/data/our_subreddits.txt'
 
 def subtract_defaults(): 
     reddits = set()
@@ -71,9 +71,9 @@ def inspect_counts():
     print reddits - set(data.keys()) # probably newer subreddits
     sorted_x = sorted(data.items(), key=operator.itemgetter(1))
     top_sr = sorted_x[-400:]  
-    with open(FOCUS, 'w') as outputfile: 
-        for sr in top_sr: 
-            outputfile.write(sr[0] + '\n')
+    #with open(FOCUS, 'w') as outputfile: 
+    #    for sr in top_sr: 
+    #        outputfile.write(sr[0] + '\n')
     print len(top_sr)
     tops = set([l[0] for l in top_sr])
     print "GENDER:", gender_related & tops

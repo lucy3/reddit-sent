@@ -14,8 +14,8 @@ import string
 import re
 from nltk import ngrams
 
-SUBREDDITS = '../data/our_subreddits.txt'
-MINI = '../data/mini_data.txt' # for code testing purposes
+SUBREDDITS = '/dfs/scratch2/lucy3/reddit-sent/data/our_subreddits.txt'
+MINI = '/dfs/scratch2/lucy3/reddit-sent/data/mini_data.txt' # for code testing purposes
 INPUT_PREFIX = '/dfs/dataset/infolab/Reddit/comments/'
 regex = re.compile('[%s]' % re.escape(string.punctuation))
 
@@ -57,7 +57,7 @@ def do_unigrams(data, m, reddits):
     uni = uni.filter(lambda l: l[0] in reddits)
     uni_dict = uni.collectAsMap()
     for sr in uni_dict: 
-        path = '../data/unigrams/' + sr + '/'
+        path = '/dfs/scratch2/lucy3/reddit-sent/data/unigrams/' + sr + '/'
         if not os.path.exists(path): 
             os.makedirs(path)
         file_path = path + m.split('/')[1]
@@ -71,7 +71,7 @@ def do_bigrams(data, m, reddits):
     bi = bi.filter(lambda l: l[0] in reddits)
     bi_dict = bi.collectAsMap()
     for sr in bi_dict: 
-        path = '../data/bigrams/' + sr + '/'
+        path = '/dfs/scratch2/lucy3/reddit-sent/data/bigrams/' + sr + '/'
         if not os.path.exists(path): 
             os.makedirs(path)
         file_path = path + m.split('/')[1]
@@ -87,7 +87,7 @@ def do_users(data, m, reddits):
     users = users.reduceByKey(lambda n1, n2: n1 | n2) 
     users_dict = users.collectAsMap()
     for sr in users_dict: 
-        path = '../data/user/' + sr + '/'
+        path = '/dfs/scratch2/lucy3/reddit-sent/data/user/' + sr + '/'
         if not os.path.exists(path): 
             os.makedirs(path)
         file_path = path + m.split('/')[1]

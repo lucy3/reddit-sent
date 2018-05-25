@@ -11,28 +11,40 @@ from collections import Counter
 import numpy as np
 from scipy import spatial
 from tqdm import tqdm # progress bar
+from sklearn.decomposition import TruncatedSVD
 
-UNIGRAMS = '../data/unigrams/'
-OUTPUT = '../logs/tf-idf_unigrams'
-VOCAB = '../logs/tf-idf_columns'
-SUBREDS = '../logs/tf-idf_rows'
+UNIGRAMS = '/dfs/scratch2/lucy3/reddit-sent/data/unigrams/'
+UNI_TFIDF = '/dfs/scratch2/lucy3/reddit-sent/logs/tf-idf_unigrams.npy'
+UNI_SVD_TFIDF = '/dfs/scratch2/lucy3/reddit-sent/logs/svd-tf-idf_unigrams.npy'
+UNI_VOCAB = '/dfs/scratch2/lucy3/reddit-sent/logs/unigram_vocab'
+UNI_ROWS = '/dfs/scratch2/lucy3/reddit-sent/logs/unigram_rows'
 
-def get_idf(): 
+USERS = '/dfs/scratch2/lucy3/reddit-sent/data/user/'
+USR_TFIDF = '/dfs/scratch2/lucy3/reddit-sent/logs/tf-idf_users.npy'
+USR_SVD_TFIDF = '/dfs/scratch2/lucy3/reddit-sent/logs/svd-tf-idf_users.npy'
+USR_VOCAB = '/dfs/scratch2/lucy3/reddit-sent/logs/users_vocab'
+USR_ROWS = '/dfs/scratch2/lucy3/reddit-sent/logs/users_rows'
+
+def get_idf(rep): 
     '''
     For each word, get log_10(N/df) where N is 
     number of subreddits. 
     Set min_df to be 5 and max_df to be 0.95
     to filter out too rare and too common words.
     '''
+    if rep == 'text': 
+        INPUT = UNIGRAMS
+    elif rep == 'user': 
+        INPUT = USERS
     dfs = Counter() 
     num_sr = 0
-    for sr in tqdm(os.listdir(UNIGRAMS)): 
+    for sr in tqdm(os.listdir(INPUT)): 
         words = set() 
         if sr.startswith('.'): continue
         num_sr += 1
-        for month in os.listdir(UNIGRAMS + sr): 
+        for month in os.listdir(INPUT + sr): 
             if month.startswith('.'): continue
-            with open(UNIGRAMS + sr + '/' + month, 'r') as inputfile: 
+            with open(INPUT + sr + '/' + month, 'r') as inputfile: 
                 for line in inputfile: 
                     words.add(line.split()[0])
         for w in words: 
@@ -45,7 +57,7 @@ def get_idf():
     return idfs
     
 
-def get_tf_idf(idfs): 
+def get_tf_idf(idfs, rep): 
     '''
     For each word in idfs, get its (1 + log tf) 
     for each document. 
@@ -53,18 +65,28 @@ def get_tf_idf(idfs):
     index corresponds to a word and the value is
     (1 + log tf)xlog_10(N/df). 
     '''
+    if rep == 'text': 
+        INPUT = UNIGRAMS
+        OUTPUT = UNI_TFIDF
+        VOCAB = UNI_VOCAB
+        ROWS = UNI_ROWS
+    elif rep == 'user': 
+        INPUT = USERS
+        OUTPUT = USR_TFIDF
+        VOCAB = USR_VOCAB
+        ROWS = USR_ROWS
     vocab = sorted(idfs.keys())
     srs = []
     X = []
     num_sr = 0
-    for sr in tqdm(os.listdir(UNIGRAMS)): 
+    for sr in tqdm(os.listdir(INPUT)): 
         srs.append(sr)
         tfs = Counter() 
         if sr.startswith('.'): continue
         num_sr += 1
-        for month in os.listdir(UNIGRAMS + sr): 
+        for month in os.listdir(INPUT + sr): 
             if month.startswith('.'): continue
-            with open(UNIGRAMS + sr + '/' + month, 'r') as inputfile: 
+            with open(INPUT + sr + '/' + month, 'r') as inputfile: 
                 for line in inputfile: 
                     contents = line.strip().split()
                     w = contents[0] 
@@ -79,7 +101,7 @@ def get_tf_idf(idfs):
     X = np.array(X)
     print X.shape
     np.save(OUTPUT, X)
-    with open(SUBREDS, 'w') as outputfile: 
+    with open(ROWS, 'w') as outputfile: 
         for sr in srs: 
             outputfile.write(sr + '\n') 
     with open(VOCAB, 'w') as outputfile: 
@@ -88,10 +110,23 @@ def get_tf_idf(idfs):
     print 1 - spatial.distance.cosine(X[srs.index('android')], X[srs.index('apple')])
     print 1 - spatial.distance.cosine(X[srs.index('london')], X[srs.index('ukpolitics')])
     print 1 - spatial.distance.cosine(X[srs.index('london')], X[srs.index('android')])
+    
+def svd_tf_idf(rep): 
+    if rep == 'text': 
+        INPUT = UNI_TFIDF
+        OUTPUT = UNI_SVD_TFIDF
+    elif rep == 'user': 
+        INPUT = USR_TFIDF
+        OUTPUT = USR_SVD_TFIDF
+    svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+    X = np.load(INPUT)
+    X_new = svd.fit_transform(X)
+    np.save(OUTPUT, X_new)
 
 def main(): 
-    idfs = get_idf() 
-    get_tf_idf(idfs)
+    #idfs = get_idf('user') 
+    #get_tf_idf(idfs, 'user')
+    svd_tf_idf('user')
 
 if __name__ == '__main__':
     main()

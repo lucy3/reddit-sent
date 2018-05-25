@@ -12,10 +12,10 @@ import string
 import os
 from pyspark import SparkConf, SparkContext
 
-SUBREDDITS = '../data/our_subreddits.txt'
+SUBREDDITS = '/dfs/scratch2/lucy3/reddit-sent/data/our_subreddits.txt'
 INPUT_PREFIX = '/dfs/dataset/infolab/Reddit/comments/'
-MINI = '../data/mini_data.txt' # for code testing purposes
-OUTPUT = '../data/partial_docs/'
+MINI = '/dfs/scratch2/lucy3/reddit-sent/data/mini_data.txt' # for code testing purposes
+OUTPUT = '/dfs/scratch2/lucy3/reddit-sent/data/partial_docs/'
 regex = re.compile('[%s]' % re.escape(string.punctuation))
 reddits = set()
             
