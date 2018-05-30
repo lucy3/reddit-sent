@@ -22,6 +22,8 @@ from collections import defaultdict
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import Normalizer
+import random
     
 def cluster_plot(rep, write=False, plot=False): 
     """
@@ -66,6 +68,9 @@ def cluster_plot(rep, write=False, plot=False):
     return labels
     
 def purity(text_labels, user_labels): 
+    '''
+    RUN MULTIPLE CLUSTERING AND GET AVERAGE
+    '''
     rev_text_labels = {}
     for cluster in text_labels: 
         for sr in text_labels[cluster]:
@@ -80,11 +85,21 @@ def purity(text_labels, user_labels):
         s += counts[m]
     return s/float(len(rev_text_labels))
 
+def baseline(): 
+    labels = defaultdict(set)
+    srs = []
+    with open(UNI_ROWS, 'r') as inputfile: 
+        for line in inputfile: 
+            srs.append(line.strip())
+    for sr in srs: 
+        labels[random.randint(0, 19)].add(sr)
+    return labels
+
 def main(): 
     text_labels = cluster_plot('text', plot=True, write=True) 
     user_labels = cluster_plot('user', plot=True, write=True) 
-    #purity(text_labels, user_labels)
-    #sim_corr()
+    baseline_labels = baseline()
+    print purity(text_labels, baseline_labels)
 
 if __name__ == '__main__':
     main()
