@@ -13,12 +13,14 @@ from collections import defaultdict
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import json
 
 UNI_INPUT = '/dfs/scratch2/lucy3/reddit-sent/logs/svd-tf-idf_unigrams.npy'
 UNI_ROWS = '/dfs/scratch2/lucy3/reddit-sent/logs/unigram_rows'
 USR_INPUT = '/dfs/scratch2/lucy3/reddit-sent/logs/svd-tf-idf_users.npy'
 USR_ROWS = '/dfs/scratch2/lucy3/reddit-sent/logs/users_rows'
 OUTPUT = '/dfs/scratch2/lucy3/reddit-sent/logs/z_score_unigrams_users.npy'
+COM_COUNTS = '/dfs/scratch2/lucy3/reddit-sent/logs/comment_counts.json'
 
 def sim_corr(): 
     uni_srs = []
@@ -58,9 +60,6 @@ def sim_corr():
     plt.savefig("/dfs/scratch2/lucy3/reddit-sent/logs/" + 'unigram_user_corr.png')
     
 def z_score(): 
-    '''
-    CHECK THAT ROW SUBREDDITS ALIGN FOR THE TWO MATRICES. 
-    '''
     uni_srs = []
     with open(UNI_ROWS, 'r') as inputfile: 
         for line in inputfile: 
@@ -91,10 +90,36 @@ def z_score():
     # Standardize scores in each column
     D = (D - np.mean(D, axis=0))/np.std(D, axis=0)
     np.save(OUTPUT, D)
+    
+def size_sim(rep): 
+    """
+    Correlation between similarity and subreddit size. 
+    """
+    if rep == 'text': 
+        ROWS = UNI_ROWS
+        INPUT = UNI_INPUT
+    elif rep == 'user': 
+        ROWS = USR_ROWS
+        INPUT = USR_INPUT
+    X = np.load(INPUT)
+    X_sim = cosine_similarity(X)
+    X_avg_sim = np.mean(X_sim, axis=1)
+    with open(COM_COUNTS, 'r') as inputfile: 
+        counts = json.load(inputfile)
+    X_counts = []
+    with open(ROWS, 'r') as inputfile: 
+        for line in inputfile: 
+            X_counts.append(counts[line.strip()])
+    X_counts = np.array(X_counts)
+    plt.scatter(X_avg_sim, X_counts, alpha=0.2, s=4)
+    plt.yscale('log')
+    plt.xlabel('average similarity')
+    plt.ylabel('counts')
+    plt.savefig("/dfs/scratch2/lucy3/reddit-sent/logs/" + rep + '_size_sim.png')
 
 def main():
     sim_corr()
-    z_score()
+    #z_score()
 
 if __name__ == '__main__':
     main()

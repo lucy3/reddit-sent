@@ -9,6 +9,7 @@ UNI_CLUST = '/dfs/scratch2/lucy3/reddit-sent/logs/unigram_clusters'
 USR_INPUT = '/dfs/scratch2/lucy3/reddit-sent/logs/svd-tf-idf_users.npy'
 USR_ROWS = '/dfs/scratch2/lucy3/reddit-sent/logs/users_rows'
 USR_CLUST = '/dfs/scratch2/lucy3/reddit-sent/logs/users_clusters'
+SR_LIST = '/dfs/scratch2/lucy3/reddit-sent/data/listofsubreddits.txt'
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans, AgglomerativeClustering
@@ -24,8 +25,32 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import Normalizer
 import random
+import codecs
+
+def tsne_viz(df, vocab, colors=None, output_filename=None):
+    """  
+    Modified from Chris Potts's implementation at 
+    https://github.com/cgpotts/cs224u/blob/master/vsm.py
+    """
+    # Recommended reduction via PCA or similar:
+    n_components = 50 if df.shape[1] >= 50 else df.shape[1]
+    dimreduce = PCA(n_components=n_components)
+    X = dimreduce.fit_transform(df)
+    # t-SNE:
+    tsne = TSNE(n_components=2, random_state=0)
+    tsnemat = tsne.fit_transform(X)
+    # Plot values:
+    xvals = tsnemat[: , 0]
+    yvals = tsnemat[: , 1]
+    # Plotting:
+    plt.scatter(xvals, yvals, c=colors)
+    plt.title('2d plot of subreddits using t-SNE, n = ' + str(len(set(colors))))
+    # Output:
+    if output_filename:
+        plt.savefig(output_filename, bbox_inches='tight')
+    plt.close()
     
-def cluster_plot(rep, write=False, plot=False): 
+def cluster_plot(rep, write=False, plot=False, k=20): 
     """
     Write out text-based and user-based clusters. 
     """
@@ -42,22 +67,17 @@ def cluster_plot(rep, write=False, plot=False):
         for line in inputfile: 
             srs.append(line.strip())
     X = np.load(INPUT)
-    kmeans = AgglomerativeClustering(n_clusters=20).fit(X)
+    kmeans = AgglomerativeClustering(n_clusters=k).fit(X)
     labels = defaultdict(set)
     for i in range(len(kmeans.labels_)): 
         label = kmeans.labels_[i]
         sr = srs[i] 
         labels[label].add(sr)
     if plot:
-        pca = PCA(n_components=2)
-        pca_result = pca.fit_transform(X)
-        pca1 = pca_result[:,0]
-        pca2 = pca_result[:,1] 
-        fig, ax = plt.subplots()
-        for i in range(pca1.shape[0]): 
-            ax.scatter(pca1[i], pca2[i], label=str(kmeans.labels_[i]), s=4)
-            ax.annotate(srs[i], xy=(pca1[i], pca2[i]), size=5)
-        plt.savefig("/dfs/scratch2/lucy3/reddit-sent/logs/" + 'pca_' + rep + '.png')
+        tsne_viz(X, srs, \
+                 colors=kmeans.labels_, \
+                 output_filename="/dfs/scratch2/lucy3/reddit-sent/logs/" \
+                 + 'tsne_' + rep + '.png')
     if write: 
         with open(CLUST, 'w') as outputfile: 
             for label in labels: 
@@ -85,6 +105,31 @@ def purity(text_labels, user_labels):
         s += counts[m]
     return s/float(len(rev_text_labels))
 
+def topic(): 
+    srs = []
+    with open(UNI_ROWS, 'r') as inputfile: 
+        for line in inputfile: 
+            srs.append(line.strip())
+    reddits = defaultdict(set)
+    curr = 0
+    with open(SR_LIST, 'r') as inputfile: 
+        for line in inputfile: 
+            if line.startswith('/r/'): 
+                sr = line.strip()[3:].lower()
+                if sr in srs: 
+                    reddits[curr].add(sr)
+            elif line.strip() == 'General Content' or \
+                line.strip() == 'Discussion' or \
+                line.strip() == 'Educational' or \
+                line.strip() == 'Entertainment' or \
+                line.strip() == 'Hobbies/Occupations' or \
+                line.strip() == 'Lifestyle' or \
+                line.strip() == 'Technology' or \
+                line.strip() == 'Humor' or \
+                line.strip() == 'Other':
+                    curr += 1
+    return reddits
+
 def baseline(): 
     labels = defaultdict(set)
     srs = []
@@ -96,10 +141,24 @@ def baseline():
     return labels
 
 def main(): 
+    '''
+    Perhaps I should use mutual information
+    rather than purity. 
+    '''
+    topic_labels = topic()
     text_labels = cluster_plot('text', plot=True, write=True) 
     user_labels = cluster_plot('user', plot=True, write=True) 
-    baseline_labels = baseline()
-    print purity(text_labels, baseline_labels)
+    #baseline_labels = baseline()
+    #print purity(text_labels, baseline_labels)
+    #print purity(text_labels, user_labels)
+    '''
+    text_labels = cluster_plot('text', k=9) 
+    user_labels = cluster_plot('user', k=9) 
+    print purity(text_labels, topic_labels)
+    print purity(topic_labels, text_labels)
+    print purity(user_labels, topic_labels)
+    print purity(topic_labels, user_labels)
+    '''
 
 if __name__ == '__main__':
     main()
