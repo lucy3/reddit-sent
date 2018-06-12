@@ -70,7 +70,8 @@ def inspect_counts():
         data = json.load(inputfile)
     print reddits - set(data.keys()) # probably newer subreddits
     sorted_x = sorted(data.items(), key=operator.itemgetter(1))
-    top_sr = sorted_x[-400:]  
+    top_sr = sorted_x[-400:] 
+    print top_sr
     #with open(FOCUS, 'w') as outputfile: 
     #    for sr in top_sr: 
     #        outputfile.write(sr[0] + '\n')

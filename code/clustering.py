@@ -15,6 +15,9 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans, AgglomerativeClustering
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+from sklearn.metrics import adjusted_rand_score, adjusted_mutual_info_score, \
+    silhouette_score, silhouette_samples
+import matplotlib.cm as cm
 from sklearn.manifold import TSNE
 from scipy.spatial.distance import cosine
 from scipy.stats import mode
@@ -27,7 +30,7 @@ from sklearn.preprocessing import Normalizer
 import random
 import codecs
 
-def tsne_viz(df, vocab, colors=None, output_filename=None):
+def tsne_viz(df, vocab, rep, colors=None, output_filename=None):
     """  
     Modified from Chris Potts's implementation at 
     https://github.com/cgpotts/cs224u/blob/master/vsm.py
@@ -42,9 +45,15 @@ def tsne_viz(df, vocab, colors=None, output_filename=None):
     # Plot values:
     xvals = tsnemat[: , 0]
     yvals = tsnemat[: , 1]
+    colormap = plt.cm.nipy_spectral
+    plt.rcParams['axes.color_cycle'] = [colormap(i) for i in np.linspace(0, 1,len(set(colors)))]
     # Plotting:
-    plt.scatter(xvals, yvals, c=colors)
-    plt.title('2d plot of subreddits using t-SNE, n = ' + str(len(set(colors))))
+    for i in set(colors): 
+        x = [p for (j,p) in enumerate(xvals) if colors[j]==i]
+        y = [p for (j,p) in enumerate(yvals) if colors[j]==i]
+        plt.scatter(x, y, label=str(i), alpha=0.8, s=6)
+    plt.legend(loc='center left', bbox_to_anchor=(1.04,0.5), ncol=2)
+    plt.title(rep.title() + '-based Clusters, n = ' + str(len(set(colors))))
     # Output:
     if output_filename:
         plt.savefig(output_filename, bbox_inches='tight')
@@ -67,30 +76,33 @@ def cluster_plot(rep, write=False, plot=False, k=20):
         for line in inputfile: 
             srs.append(line.strip())
     X = np.load(INPUT)
+    # sort by subreddit 
+    srs = np.array(srs, dtype=object)
+    srs_sort = np.argsort(srs) 
+    srs = srs[srs_sort]
+    X= X[srs_sort]
+    # cluster 
     kmeans = AgglomerativeClustering(n_clusters=k).fit(X)
-    labels = defaultdict(set)
+    labels_dict = defaultdict(set)
     for i in range(len(kmeans.labels_)): 
         label = kmeans.labels_[i]
         sr = srs[i] 
-        labels[label].add(sr)
+        labels_dict[label].add(sr)
     if plot:
-        tsne_viz(X, srs, \
+        tsne_viz(X, srs, rep, \
                  colors=kmeans.labels_, \
                  output_filename="/dfs/scratch2/lucy3/reddit-sent/logs/" \
                  + 'tsne_' + rep + '.png')
     if write: 
         with open(CLUST, 'w') as outputfile: 
-            for label in labels: 
+            for label in labels_dict: 
                 outputfile.write(str(label) + '\t')
-                for sr in labels[label]: 
+                for sr in labels_dict[label]: 
                     outputfile.write(sr + ' ')
                 outputfile.write('\n')
-    return labels
+    return labels_dict, kmeans.labels_, X
     
 def purity(text_labels, user_labels): 
-    '''
-    RUN MULTIPLE CLUSTERING AND GET AVERAGE
-    '''
     rev_text_labels = {}
     for cluster in text_labels: 
         for sr in text_labels[cluster]:
@@ -105,60 +117,190 @@ def purity(text_labels, user_labels):
         s += counts[m]
     return s/float(len(rev_text_labels))
 
-def topic(): 
+def topic(many=False): 
     srs = []
     with open(UNI_ROWS, 'r') as inputfile: 
         for line in inputfile: 
             srs.append(line.strip())
     reddits = defaultdict(set)
+    srs = sorted(srs)
+    labels = np.zeros(len(srs))
     curr = 0
     with open(SR_LIST, 'r') as inputfile: 
         for line in inputfile: 
             if line.startswith('/r/'): 
                 sr = line.strip()[3:].lower()
                 if sr in srs: 
+                    labels[srs.index(sr)] = curr
                     reddits[curr].add(sr)
-            elif line.strip() == 'General Content' or \
-                line.strip() == 'Discussion' or \
-                line.strip() == 'Educational' or \
-                line.strip() == 'Entertainment' or \
-                line.strip() == 'Hobbies/Occupations' or \
-                line.strip() == 'Lifestyle' or \
-                line.strip() == 'Technology' or \
-                line.strip() == 'Humor' or \
-                line.strip() == 'Other':
-                    curr += 1
-    return reddits
+            elif many and not line.startswith('$') and line.strip() != '': 
+                curr += 1
+            elif not many and line.startswith('$'): 
+                curr += 1
+    return reddits, labels
 
-def baseline(): 
-    labels = defaultdict(set)
+def baseline(n=20): 
+    labels_dict = defaultdict(set)
     srs = []
     with open(UNI_ROWS, 'r') as inputfile: 
         for line in inputfile: 
             srs.append(line.strip())
+    srs = sorted(srs)
+    labels = []
     for sr in srs: 
-        labels[random.randint(0, 19)].add(sr)
-    return labels
+        cluster = random.randint(0, n-1)
+        labels_dict[cluster].add(sr)
+        labels.append(cluster)
+    return labels_dict, labels
 
-def main(): 
+def evaluation(): 
+    print "K=20"
+    text_labels_dict, text_labels, text_X = cluster_plot('text') 
+    user_labels_dict, user_labels, user_X = cluster_plot('user') 
+    print "silhouette text, user", silhouette_score(text_X, user_labels)
+    print "silhouette user, text", silhouette_score(user_X, text_labels)
+    print "rand text, user", adjusted_rand_score(text_labels, user_labels)
+    print "nmi text, user", adjusted_mutual_info_score(text_labels, user_labels)
+    topic_labels_dict, topic_labels = topic()
+    print "rand text, topic", adjusted_rand_score(text_labels, topic_labels)
+    print "nmi text, topic", adjusted_mutual_info_score(text_labels, topic_labels)
+    baseline_labels_dict, baseline_labels = baseline()
+    print "silhouette text, random", silhouette_score(text_X, baseline_labels)
+    print "silhouette user, random", silhouette_score(user_X, baseline_labels)
+    print "rand text, random", adjusted_rand_score(text_labels, baseline_labels)
+    print "nmi text, random", adjusted_mutual_info_score(text_labels, baseline_labels)
+    print "rand user, random", adjusted_rand_score(user_labels, baseline_labels)
+    print "nmi user, random", adjusted_mutual_info_score(user_labels, baseline_labels)
+    print "nmi user, topic", adjusted_mutual_info_score(user_labels, topic_labels)
+    print "K=9"
+    text_labels_dict, text_labels, text_X = cluster_plot('text', k=9) 
+    user_labels_dict, user_labels, user_X = cluster_plot('user', k=9) 
+    print "silhouette text, user", silhouette_score(text_X, user_labels)
+    print "silhouette user, text", silhouette_score(user_X, text_labels)
+    print "rand text, user", adjusted_rand_score(text_labels, user_labels)
+    print "nmi text, user", adjusted_mutual_info_score(text_labels, user_labels)
+    topic_labels_dict, topic_labels = topic()
+    print "rand text, topic", adjusted_rand_score(text_labels, topic_labels)
+    print "nmi text, topic", adjusted_mutual_info_score(text_labels, topic_labels)
+    print "silhouette text, topic", silhouette_score(text_X, topic_labels)
+    print "silhouette user, topic", silhouette_score(user_X, topic_labels)
+    baseline_labels_dict, baseline_labels = baseline(n=9)
+    print "silhouette text, random", silhouette_score(text_X, baseline_labels)
+    print "silhouette user, random", silhouette_score(user_X, baseline_labels)
+    print "rand text, random", adjusted_rand_score(text_labels, baseline_labels)
+    print "nmi text, random", adjusted_mutual_info_score(text_labels, baseline_labels)
+    print "rand user, random", adjusted_rand_score(user_labels, baseline_labels)
+    print "nmi user, random", adjusted_mutual_info_score(user_labels, baseline_labels)
+
+def choosing_k(rep): 
     '''
-    Perhaps I should use mutual information
-    rather than purity. 
+    https://stackoverflow.com/questions/37767298/another-function-useful-than-elbow-in-finding-k-clusters
     '''
-    topic_labels = topic()
-    text_labels = cluster_plot('text', plot=True, write=True) 
-    user_labels = cluster_plot('user', plot=True, write=True) 
-    #baseline_labels = baseline()
-    #print purity(text_labels, baseline_labels)
-    #print purity(text_labels, user_labels)
-    '''
-    text_labels = cluster_plot('text', k=9) 
-    user_labels = cluster_plot('user', k=9) 
-    print purity(text_labels, topic_labels)
-    print purity(topic_labels, text_labels)
-    print purity(user_labels, topic_labels)
-    print purity(topic_labels, user_labels)
-    '''
+    if rep == 'text': 
+        ROWS = UNI_ROWS
+        INPUT = UNI_INPUT
+        CLUST = UNI_CLUST
+    elif rep == 'user': 
+        ROWS = USR_ROWS
+        INPUT = USR_INPUT
+        CLUST = USR_CLUST
+    srs = []
+    with open(ROWS, 'r') as inputfile: 
+        for line in inputfile: 
+            srs.append(line.strip())
+    X = np.load(INPUT)
+    # sort by subreddit 
+    srs = np.array(srs, dtype=object)
+    srs_sort = np.argsort(srs) 
+    srs = srs[srs_sort]
+    X= X[srs_sort]
+    # cluster 
+    Ks = range(2, 100)
+    km = [AgglomerativeClustering(n_clusters=i) for i in Ks]
+    scores = [silhouette_score(X, km[i].fit(X).labels_) for i in range(len(km))]
+    plt.plot(Ks, scores)
+    plt.xlabel('k')
+    plt.ylabel('silhouette score')
+    plt.title('Choosing optimal k')
+    plt.savefig('../logs/choosing_k'+rep+'.png')
+    plt.close()
+    
+def choosing_k_plots(rep):
+    """
+    Pulled from 
+    http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html
+    """
+    if rep == 'text': 
+        ROWS = UNI_ROWS
+        INPUT = UNI_INPUT
+        CLUST = UNI_CLUST
+    elif rep == 'user': 
+        ROWS = USR_ROWS
+        INPUT = USR_INPUT
+        CLUST = USR_CLUST
+    srs = []
+    with open(ROWS, 'r') as inputfile: 
+        for line in inputfile: 
+            srs.append(line.strip())
+    X = np.load(INPUT)
+    # sort by subreddit 
+    srs = np.array(srs, dtype=object)
+    srs_sort = np.argsort(srs) 
+    srs = srs[srs_sort]
+    X= X[srs_sort]
+    # cluster 
+    Ks = range(2, 100)
+    for n_clusters in Ks: 
+        clusterer = AgglomerativeClustering(n_clusters=n_clusters)
+        cluster_labels = clusterer.fit_predict(X)
+        
+        silhouette_avg = silhouette_score(X, cluster_labels)
+        print("For n_clusters =", n_clusters,
+              "The average silhouette_score is :", silhouette_avg)
+
+        # Compute the silhouette scores for each sample
+        sample_silhouette_values = silhouette_samples(X, cluster_labels)
+
+        y_lower = 10
+        ax = plt.gca()
+        for i in range(n_clusters):
+            # Aggregate the silhouette scores for samples belonging to
+            # cluster i, and sort them
+            ith_cluster_silhouette_values = \
+                sample_silhouette_values[cluster_labels == i]
+
+            ith_cluster_silhouette_values.sort()
+
+            size_cluster_i = ith_cluster_silhouette_values.shape[0]
+            y_upper = y_lower + size_cluster_i
+
+            color = cm.spectral(float(i) / n_clusters)
+            ax.fill_betweenx(np.arange(y_lower, y_upper),
+                              0, ith_cluster_silhouette_values,
+                              facecolor=color, edgecolor=color, alpha=0.7)
+
+            # Label the silhouette plots with their cluster numbers at the middle
+            ax.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+            # Compute the new y_lower for next plot
+            y_lower = y_upper + 10  # 10 for the 0 samples
+
+        ax.set_title("The silhouette plot for the various clusters.")
+        ax.set_xlabel("The silhouette coefficient values")
+        ax.set_ylabel("Cluster label")
+
+        # The vertical line for average silhouette score of all the values
+        ax.axvline(x=silhouette_avg, color="red", linestyle="--")
+
+        ax.set_yticks([])  # Clear the yaxis labels / ticks
+        ax.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
+        plt.savefig('../logs/ChoosingK/silhouette_'+str(n_clusters)+rep+'.png')
+        plt.close()
+
+def main():
+    evaluation() 
+    #choosing_k('text')
+    #choosing_k('user')
 
 if __name__ == '__main__':
     main()

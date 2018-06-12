@@ -1,3 +1,4 @@
+$General Content
 Gifs
 /r/gifs
 /r/behindthegifs
@@ -91,6 +92,7 @@ Videos
 /r/DeepIntoYouTube
 /r/nottimanderic
 
+$Discussion
 General
 /r/ShowerThoughts
 /r/DoesAnybodyElse
@@ -187,6 +189,7 @@ Support
 /r/offmychest
 /r/socialanxiety
 
+$Educational
 General
 /r/YouShouldKnow
 /r/everymanshouldknow
@@ -327,6 +330,7 @@ Chemistry
 Physics
 /r/physics
 
+$Entertainment
 General
 /r/entertainment
 /r/fantheories
@@ -929,6 +933,7 @@ Netflix Related
 /r/Netflix
 /r/bestofnetflix
 
+$Hobbies/Occupations
 General
 /r/DIY 
 /r/cosplay
@@ -1093,7 +1098,7 @@ Travel
 /r/travel
 /r/solotravel
 
-Lifestyle
+$Lifestyle
 General
 /r/LifeProTips
 /r/lifehacks
@@ -1409,7 +1414,7 @@ Self-Improvement
 /r/sportsarefun
 /r/GetStudying
 
-Technology
+$Technology
 /r/technology
 /r/internetisbeautiful
 /r/futurology
@@ -1524,6 +1529,7 @@ Sound
 /r/headphones
 /r/audioengineering
 
+$Humor
 General Humor
 /r/funny
 /r/humor
@@ -1598,6 +1604,7 @@ Rage Comics
 /r/fffffffuuuuuuuuuuuu 
 /r/iiiiiiitttttttttttt
 
+$Other
 Animals
 /r/AnimalsBeingJerks 
 /r/AnimalsBeingBros
