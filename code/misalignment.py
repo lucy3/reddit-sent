@@ -43,19 +43,27 @@ def sim_corr():
     Y = Y[usr_sort]
     X_vals = []
     Y_vals = []
+    X_vals_gen = []
+    Y_vals_gen = []
+    genders = set(['actuallesbians', 'askgaybros', 'mensrights', \
+                   'askmen', 'askwomen', 'xxfitness', 'femalefashionadvice', \
+                   'malefashionadvice', 'trollxchromosomes'])
     for i in range(X.shape[0]): 
         for j in range(i + 1, X.shape[0]): 
             text_sim = 1-cosine(X[i], X[j])
             user_sim = 1-cosine(Y[i], Y[j])
-            if text_sim < 0.2 and user_sim > 0.8: 
-                print "LOW TEXT, HIGH USER", uni_srs[i], uni_srs[j], usr_srs[i], usr_srs[j]
-            if text_sim > 0.8 and user_sim < 0.2: 
-                print "HIGH TEXT, LOW USER", uni_srs[i], uni_srs[j]
+            #if text_sim < 0.2 and user_sim > 0.8: 
+            #    print "LOW TEXT, HIGH USER", uni_srs[i], uni_srs[j]
+            #if text_sim > 0.8 and user_sim < 0.2: 
+            #    print "HIGH TEXT, LOW USER", uni_srs[i], uni_srs[j]
             X_vals.append(text_sim)
             Y_vals.append(user_sim)
+            if uni_srs[i] in genders and uni_srs[j] in genders: 
+                X_vals_gen.append(text_sim)
+                Y_vals_gen.append(user_sim)
     print "Spearman:", spearmanr(X_vals, Y_vals)
     plt.scatter(X_vals, Y_vals, alpha=0.2, s=4)
-    #plt.scatter(X_vals_gen, Y_vals_gen, s=5)
+    plt.scatter(X_vals_gen, Y_vals_gen, s=5)
     plt.xlabel('text similarity')
     plt.ylabel('user similarity')
     plt.savefig("/dfs/scratch2/lucy3/reddit-sent/logs/" + 'unigram_user_corr.png')
