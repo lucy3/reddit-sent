@@ -48,13 +48,14 @@ def sim_corr():
             text_sim = 1-cosine(X[i], X[j])
             user_sim = 1-cosine(Y[i], Y[j])
             if text_sim < 0.2 and user_sim > 0.8: 
-                print "LOW TEXT, HIGH USER", uni_srs[i], uni_srs[j]
+                print "LOW TEXT, HIGH USER", uni_srs[i], uni_srs[j], usr_srs[i], usr_srs[j]
             if text_sim > 0.8 and user_sim < 0.2: 
                 print "HIGH TEXT, LOW USER", uni_srs[i], uni_srs[j]
             X_vals.append(text_sim)
             Y_vals.append(user_sim)
     print "Spearman:", spearmanr(X_vals, Y_vals)
     plt.scatter(X_vals, Y_vals, alpha=0.2, s=4)
+    #plt.scatter(X_vals_gen, Y_vals_gen, s=5)
     plt.xlabel('text similarity')
     plt.ylabel('user similarity')
     plt.savefig("/dfs/scratch2/lucy3/reddit-sent/logs/" + 'unigram_user_corr.png')
@@ -84,7 +85,7 @@ def z_score():
     X_rank = np.argsort(X_sim, axis=1)
     Y_rank = np.argsort(Y_sim, axis=1)
     # Create D = A - T. 
-    D = X_rank - Y_rank 
+    D = X_rank - Y_rank # unigram - user
     # Standardize scores in each row by subtracting mean and dividing by standard deviation
     D = (D - np.mean(D, axis=1))/np.std(D, axis=1)
     # Standardize scores in each column

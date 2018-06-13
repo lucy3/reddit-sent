@@ -154,43 +154,39 @@ def baseline(n=20):
     return labels_dict, labels
 
 def evaluation(): 
-    print "K=20"
-    text_labels_dict, text_labels, text_X = cluster_plot('text') 
-    user_labels_dict, user_labels, user_X = cluster_plot('user') 
-    print "silhouette text, user", silhouette_score(text_X, user_labels)
-    print "silhouette user, text", silhouette_score(user_X, text_labels)
-    print "rand text, user", adjusted_rand_score(text_labels, user_labels)
-    print "nmi text, user", adjusted_mutual_info_score(text_labels, user_labels)
-    topic_labels_dict, topic_labels = topic()
-    print "rand text, topic", adjusted_rand_score(text_labels, topic_labels)
-    print "nmi text, topic", adjusted_mutual_info_score(text_labels, topic_labels)
-    baseline_labels_dict, baseline_labels = baseline()
-    print "silhouette text, random", silhouette_score(text_X, baseline_labels)
-    print "silhouette user, random", silhouette_score(user_X, baseline_labels)
-    print "rand text, random", adjusted_rand_score(text_labels, baseline_labels)
-    print "nmi text, random", adjusted_mutual_info_score(text_labels, baseline_labels)
-    print "rand user, random", adjusted_rand_score(user_labels, baseline_labels)
-    print "nmi user, random", adjusted_mutual_info_score(user_labels, baseline_labels)
-    print "nmi user, topic", adjusted_mutual_info_score(user_labels, topic_labels)
-    print "K=9"
-    text_labels_dict, text_labels, text_X = cluster_plot('text', k=9) 
-    user_labels_dict, user_labels, user_X = cluster_plot('user', k=9) 
-    print "silhouette text, user", silhouette_score(text_X, user_labels)
-    print "silhouette user, text", silhouette_score(user_X, text_labels)
-    print "rand text, user", adjusted_rand_score(text_labels, user_labels)
-    print "nmi text, user", adjusted_mutual_info_score(text_labels, user_labels)
-    topic_labels_dict, topic_labels = topic()
-    print "rand text, topic", adjusted_rand_score(text_labels, topic_labels)
-    print "nmi text, topic", adjusted_mutual_info_score(text_labels, topic_labels)
-    print "silhouette text, topic", silhouette_score(text_X, topic_labels)
-    print "silhouette user, topic", silhouette_score(user_X, topic_labels)
-    baseline_labels_dict, baseline_labels = baseline(n=9)
-    print "silhouette text, random", silhouette_score(text_X, baseline_labels)
-    print "silhouette user, random", silhouette_score(user_X, baseline_labels)
-    print "rand text, random", adjusted_rand_score(text_labels, baseline_labels)
-    print "nmi text, random", adjusted_mutual_info_score(text_labels, baseline_labels)
-    print "rand user, random", adjusted_rand_score(user_labels, baseline_labels)
-    print "nmi user, random", adjusted_mutual_info_score(user_labels, baseline_labels)
+    rand_text_topic = []
+    rand_text_user = []
+    rand_text_random = []
+    rand_user_topic = []
+    nmi_text_user = []
+    nmi_text_topic = []
+    nmi_text_random = []
+    nmi_user_topic = []
+    ks = [5, 9, 13, 17, 20, 21, 25, 28, 30, 32, 35]
+    for k in ks: 
+        print "K=", k
+        text_labels_dict, text_labels, text_X = cluster_plot('text', k=k) 
+        user_labels_dict, user_labels, user_X = cluster_plot('user', k=k) 
+        baseline_labels_dict, baseline_labels = baseline(n=k)
+        topic_labels_dict, topic_labels = topic()
+        rand_text_topic.append(adjusted_rand_score(text_labels, topic_labels))
+        rand_text_user.append(adjusted_rand_score(text_labels, user_labels))
+        rand_text_random.append(adjusted_rand_score(text_labels, baseline_labels))
+        rand_user_topic.append(adjusted_rand_score(user_labels, topic_labels))
+        nmi_text_user.append(adjusted_mutual_info_score(text_labels, user_labels))
+        nmi_text_topic.append(adjusted_mutual_info_score(text_labels, topic_labels))
+        nmi_text_random.append(adjusted_mutual_info_score(text_labels, baseline_labels))
+        nmi_user_topic.append(adjusted_mutual_info_score(user_labels, topic_labels))
+    plt.plot(ks, rand_text_topic, label="rand_text_topic")
+    plt.plot(ks, rand_text_user, label="rand_text_user")
+    plt.plot(ks, rand_text_random, label="rand_text_random")
+    plt.plot(ks, rand_user_topic, label="rand_user_topic")
+    plt.plot(ks, nmi_text_user, label="nmi_text_user")
+    plt.plot(ks, nmi_text_topic, label="nmi_text_topic")
+    plt.plot(ks, nmi_text_random, label="nmi_text_random")
+    plt.plot(ks, nmi_user_topic, label="nmi_user_topic")
+    plt.legend()
+    plt.savefig("../logs/evaluation.png")
 
 def choosing_k(rep): 
     '''
