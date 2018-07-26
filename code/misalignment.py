@@ -61,12 +61,15 @@ def sim_corr():
             if uni_srs[i] in genders and uni_srs[j] in genders: 
                 X_vals_gen.append(text_sim)
                 Y_vals_gen.append(user_sim)
-    print "Spearman:", spearmanr(X_vals, Y_vals)
+    rho, pval = spearmanr(X_vals, Y_vals)
+    print "Spearman:", rho, pval
+    '''
     plt.scatter(X_vals, Y_vals, alpha=0.2, s=4)
     plt.scatter(X_vals_gen, Y_vals_gen, s=5)
     plt.xlabel('text similarity')
     plt.ylabel('user similarity')
     plt.savefig("/dfs/scratch2/lucy3/reddit-sent/logs/" + 'unigram_user_corr.png')
+    '''
     
 def z_score(): 
     uni_srs = []
