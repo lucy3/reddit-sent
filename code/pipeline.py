@@ -261,7 +261,7 @@ def read_in_bootstraped_values(socialsent_lexicons_dir,subreddit):
             contents = line.strip().split('\t')
             scaled_sent_dict[contents[0]] = float(contents[1])
             scaled_sent_stds[contents[0]] = float(contents[2])
-    return scaled_sent_dict, scaled_sent_stds
+    return scaled_sent_stds, scaled_sent_dict
 
 """
 Creates sentiment vectors for all subreddits listed in subreddit_names after lexicon induction 
