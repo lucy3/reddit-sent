@@ -328,7 +328,7 @@ def main():
 
     #all gender subreddits ('london' no longer included)
     subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes','actuallesbians','askmen','askwomen','askgaybros','xxfitness']
-    '''
+
     #makes sentiment lexicons for each subreddit
     for subreddit in subreddit_list:
         print(subreddit)
@@ -336,7 +336,7 @@ def main():
         
     if bstrp: 
         make_bootstrap_lexicon(subreddit_list, sent_lexicons_dir)
-    '''
+
     #makes vectors for each subreddit after lexicon induction
     make_sentprop_vectors(subreddit_list,sent_lexicons_dir,sent_vectors_dir,bstrp)
 
