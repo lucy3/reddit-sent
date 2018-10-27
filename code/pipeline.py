@@ -157,14 +157,14 @@ def run_sentprop(subreddit,ppmi_svd_dir,socialsent_lexicons_dir,vocab_dir,topn=5
     #program = 'python make_sent_lexicons.py ' + subreddit + " " + ppmi_svd_dir + " " + socialsent_lexicons_dir + " " + vocab_dir
     #os.system(program)
 
-    stop_words = set(stopwords.words('english'))
-    stop_words.add('<#S#>') #dummy token 
+    #stop_words = set(stopwords.words('english'))
+    #stop_words.add('<#S#>') #dummy token 
 
     fname = os.path.join(vocab_dir,subreddit + '.txt')
     with open(fname,'r') as f:
         words = f.readlines()
 
-    top_words = [w.split()[0] for w in words if w not in stop_words][:topn] 
+    top_words = [w.split()[0] for w in words][:topn] 
     pos_seeds, neg_seeds = seeds.twitter_seeds() #Twitter seed words (from socialsent package)
 
     vector_file = os.path.join(ppmi_svd_dir,subreddit + '.txt')
