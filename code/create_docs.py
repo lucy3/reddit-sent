@@ -1,6 +1,4 @@
 """
-UGH 
-
 Iterate through data and create giant
 subreddit documents
 """
