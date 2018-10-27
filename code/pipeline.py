@@ -194,9 +194,9 @@ Specify all relevant directories
 def make_sent_lexicon(subreddit,concat_dir,vocab_dir,cooccur_dir,
     ppmi_svd_dir,socialsent_lexicons_dir,socialsent_vectors_dir,bstrp):
 
-    get_vocabulary(subreddit,concat_dir,vocab_dir)
-    get_count_matrices(subreddit,concat_dir,vocab_dir,cooccur_dir)
-    get_ppmi_svd(subreddit,vocab_dir,cooccur_dir,ppmi_svd_dir)
+    #get_vocabulary(subreddit,concat_dir,vocab_dir)
+    #get_count_matrices(subreddit,concat_dir,vocab_dir,cooccur_dir)
+    #get_ppmi_svd(subreddit,vocab_dir,cooccur_dir,ppmi_svd_dir)
     run_sentprop(subreddit,ppmi_svd_dir,socialsent_lexicons_dir,vocab_dir,bstrp)
 
 
