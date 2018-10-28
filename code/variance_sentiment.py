@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import cosine_similarity
 from nltk.corpus import stopwords
 from collections import defaultdict
+from scipy.stats import pearsonr
     
 def create_dataframe(vector_dir,subreddit_list):
     vecs = {}
@@ -26,8 +27,12 @@ def get_variances(df):
     return idx,variances
 
 def calculate_variances(): 
+    '''
+    Finding the words with highest variance. 
+    '''
     vector_dir = '../logs/socialsent_vectors_ppmi_svd_top5000'
-    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes','actuallesbians','askmen','askwomen','askgaybros','xxfitness']
+    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes',
+                      'actuallesbians','askmen','askwomen','askgaybros','xxfitness']
     vocab_file = 'vocab_socialsent_ordered.pkl'
     variance_file = 'variance_socialsent.tsv'
     df = create_dataframe(vector_dir,subreddit_list)
@@ -49,10 +54,14 @@ def calculate_variances():
             tsvin.writerow((vocab_list[i],variances[i]))
 
 def variance_vs_neighbors(): 
-    # hypothesis: high variance due to having lots of diff meanings
-    # diff meanings -> lots of diff neighbors across subreddits
+    '''
+    Why do certain words have very high variance? 
+    -> the neighbors SentProp encounters have lots of different sentiment.
+    You have to be polysemous and your senses need to be very positive or negative.
+    '''
     vocab_dir = '../logs/vocab_counts'
-    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes','actuallesbians','askmen','askwomen','askgaybros','xxfitness']
+    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes',
+                      'actuallesbians','askmen','askwomen','askgaybros','xxfitness']
     variance_file = 'variance_socialsent.tsv'
     variance_dict = {}
     with open('../logs/' + variance_file, 'r') as tsvin: 
@@ -86,10 +95,47 @@ def variance_vs_neighbors():
                     print words[X_rank[i][-j]]
     print neighbors['jealous']
     print neighbors['sick']
+    
+def variance_across_params(): 
+    '''
+    If we adjust K (number of neighbors) and beta, 
+    what happens? 
+    '''
+    sent_lexicons_dir_main = '../logs/socialsent_lexicons_ppmi_svd_top5000'
+    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes',
+                      'actuallesbians','askmen','askwomen','askgaybros','xxfitness']
+    for subreddit in subreddit_list: 
+        vocab = []
+        default_scores = []
+        with open(sent_lexicons_dir_main + '/' + subreddit + '.txt', 'r') as infile: 
+            for line in infile: 
+                contents = line.strip().split()
+                vocab.append(contents[0])
+                default_scores.append(float(contents[1]))
+        #for params in [(0.5, 25), (0.7, 25), (0.9, 20), (0.9, 30)]:
+        for params in [(0.9, 15), (0.9, 35)]:
+            param_scores = np.zeros(len(default_scores))
+            beta, nn = params
+            file = sent_lexicons_dir_main + '_' + str(nn) + '_' + str(beta) + '/' + subreddit + '.txt'
+            with open(file, 'r') as infile: 
+                for line in infile: 
+                    contents = line.strip().split()
+                    idx = vocab.index(contents[0])
+                    param_scores[idx] = float(contents[1])
+            print subreddit, params, pearsonr(default_scores, param_scores)
+            plt.scatter(default_scores, param_scores)
+            plt.xlabel('default params K=25, beta=0.9')
+            plt.ylabel('new params K='+str(nn)+', beta='+str(beta))
+            plt.xlim(min(min(default_scores), min(param_scores)), max(max(default_scores), max(param_scores)))
+            plt.ylim(min(min(default_scores), min(param_scores)), max(max(default_scores), max(param_scores))) 
+            plt.title(subreddit)
+            plt.savefig('../logs/parameter_comparison/' + str(nn) + '_' + str(beta) + '_' + subreddit + '.png')
+            plt.close()
 
 def main():
     #calculate_variances()
-    variance_vs_neighbors()
+    #variance_vs_neighbors()
+    variance_across_params()
 
 
 
