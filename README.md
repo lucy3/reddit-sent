@@ -13,4 +13,4 @@ We used Reddit comments between May 2016 and April 2017 from nine gendered commu
 - `subreddit_counts.py` calculates basic statistics about our data
 - `variance_sentiment.py` finds words with high variance in sentiment across subreddits
 ## Lexicons
-The induced sentiment lexicons we analyzed in our paper can be found [here](https://github.com/lucy3/reddit-sent/tree/master/logs/socialsent_lexicons_ppmi_svd_top5000). 
+The induced sentiment lexicons we analyzed in our paper can be found [here](https://github.com/lucy3/reddit-sent/tree/master/logs/socialsent_lexicons_ppmi_svd_top5000). We also include our PPMI-SVD word vectors for each subreddit in `ppmi_svd_vectors.zip` and word frequencies in `vocab_counts.zip`.
