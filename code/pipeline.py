@@ -153,7 +153,7 @@ Resulting lexicon stored in socialsent_lexicons_dir
 topn = n most frequent words for which to induce lexicons
 NOTE: some code adapted from original SocialSent released code including random_walk 
 """
-def run_sentprop(subreddit,ppmi_svd_dir,socialsent_lexicons_dir,vocab_dir,topn=5000,bstrp=False):
+def run_sentprop(subreddit,ppmi_svd_dir,socialsent_lexicons_dir,vocab_dir,topn=5000,bstrp=False,nn=25,beta=0.9):
     #program = 'python make_sent_lexicons.py ' + subreddit + " " + ppmi_svd_dir + " " + socialsent_lexicons_dir + " " + vocab_dir
     #os.system(program)
 
@@ -173,11 +173,12 @@ def run_sentprop(subreddit,ppmi_svd_dir,socialsent_lexicons_dir,vocab_dir,topn=5
 
     if bstrp:
         polarities = bootstrap(embeddings, pos_seeds, neg_seeds, return_all=True,
-                    nn=25, beta=0.9, num_boots=50, n_procs=10) # NEW
+                    nn=nn, beta=beta, num_boots=50, n_procs=10) # NEW
         outfile = os.path.join(socialsent_lexicons_dir,subreddit + '.pkl') # NEW
         util.write_pickle(polarities, outfile) # NEW
     else:
-        polarities = random_walk(embeddings, pos_seeds, neg_seeds, beta=0.9, nn=25,num_boots=50,n_procs=10)
+        polarities = random_walk(embeddings, pos_seeds, neg_seeds, beta=beta, 
+                                 nn=nn, num_boots=50, n_procs=10)
         sorted_x = sorted(polarities.items(), key=operator.itemgetter(1))
         outfile = os.path.join(socialsent_lexicons_dir,subreddit + '.txt')
 
@@ -194,9 +195,9 @@ Specify all relevant directories
 def make_sent_lexicon(subreddit,concat_dir,vocab_dir,cooccur_dir,
     ppmi_svd_dir,socialsent_lexicons_dir,socialsent_vectors_dir,bstrp):
 
-    #get_vocabulary(subreddit,concat_dir,vocab_dir)
-    #get_count_matrices(subreddit,concat_dir,vocab_dir,cooccur_dir)
-    #get_ppmi_svd(subreddit,vocab_dir,cooccur_dir,ppmi_svd_dir)
+    get_vocabulary(subreddit,concat_dir,vocab_dir)
+    get_count_matrices(subreddit,concat_dir,vocab_dir,cooccur_dir)
+    get_ppmi_svd(subreddit,vocab_dir,cooccur_dir,ppmi_svd_dir)
     run_sentprop(subreddit,ppmi_svd_dir,socialsent_lexicons_dir,vocab_dir,bstrp)
 
 
@@ -316,8 +317,26 @@ def make_bootstrap_lexicon(subreddit_names, socialsent_lexicons_dir):
         with open(os.path.join(socialsent_lexicons_dir, sr + '.txt'), 'w') as outfile:
             for p in sorted_pols: 
                 outfile.write(p[0] + '\t' + str(p[1]) + '\t' + str(stds[p[0]]) + '\n')
-
-def main():
+                
+def modify_parameters(): 
+    subreddit_list  = ['femalefashionadvice','malefashionadvice','mensrights',
+                       'trollxchromosomes','actuallesbians','askmen','askwomen','askgaybros','xxfitness']
+    ppmi_svd_dir = '../logs/ppmi_svd_vectors'
+    sent_lexicons_dir_main = '../logs/socialsent_lexicons_ppmi_svd_top5000'
+    vocab_dir = '../logs/vocab_counts'
+    bstrp = True
+    for params in [(0.9, 20), (0.9, 30), (0.9, 15), (0.8, 25), (0.7, 25), (1.0, 25)]: 
+        beta, nn = params
+        sent_lexicons_dir = sent_lexicons_dir_main + '_' + str(nn) + '_' + str(beta)
+        print sent_lexicons_dir
+        if not os.path.exists(sent_lexicons_dir):
+            os.makedirs(sent_lexicons_dir)
+        for subreddit in subreddit_list:
+            run_sentprop(subreddit, ppmi_svd_dir, sent_lexicons_dir, vocab_dir, topn=5000, bstrp=bstrp, nn=nn,beta=beta)
+        if bstrp: 
+            make_bootstrap_lexicon(subreddit_list, sent_lexicons_dir)
+        
+def run_main_pipeline(): 
     bstrp = True
     vocab_dir = '../logs/vocab_counts'
     concat_dir = '../logs/concat_subs'
@@ -327,7 +346,8 @@ def main():
     sent_vectors_dir = '../logs/socialsent_vectors_ppmi_svd_top5000'
 
     #all gender subreddits ('london' no longer included)
-    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights','trollxchromosomes','actuallesbians','askmen','askwomen','askgaybros','xxfitness']
+    subreddit_list = ['femalefashionadvice','malefashionadvice','mensrights',
+    'trollxchromosomes','actuallesbians','askmen','askwomen','askgaybros','xxfitness']
 
     #makes sentiment lexicons for each subreddit
     for subreddit in subreddit_list:
@@ -339,6 +359,9 @@ def main():
 
     #makes vectors for each subreddit after lexicon induction
     make_sentprop_vectors(subreddit_list,sent_lexicons_dir,sent_vectors_dir,bstrp)
+
+def main():
+    modify_parameters()
 
 if __name__ == "__main__":
 	main()
