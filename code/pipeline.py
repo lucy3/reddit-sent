@@ -325,7 +325,8 @@ def modify_parameters():
     sent_lexicons_dir_main = '../logs/socialsent_lexicons_ppmi_svd_top5000'
     vocab_dir = '../logs/vocab_counts'
     bstrp = True
-    for params in [(0.9, 20), (0.9, 30), (0.9, 15), (0.8, 25), (0.7, 25), (1.0, 25)]: 
+    #for params in [(0.9, 20), (0.9, 30), (0.5, 25), (0.7, 25)]: 
+    for params in [(0.9, 15), (0.9, 35)]:
         beta, nn = params
         sent_lexicons_dir = sent_lexicons_dir_main + '_' + str(nn) + '_' + str(beta)
         print sent_lexicons_dir
