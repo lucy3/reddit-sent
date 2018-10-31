@@ -94,8 +94,8 @@ def variance_vs_neighbors():
                 if words[i] == 'sick':
                     print words[X_rank[i][-j]]
     print neighbors['jealous']
-    print neighbors['sick']
-    
+    print neighbors['sick']    
+
 def variance_across_params(): 
     '''
     If we adjust K (number of neighbors) and beta, 
@@ -134,8 +134,8 @@ def variance_across_params():
 
 def main():
     #calculate_variances()
-    #variance_vs_neighbors()
-    variance_across_params()
+    variance_vs_neighbors()
+    #variance_across_params()
 
 
 
